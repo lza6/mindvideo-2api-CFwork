@@ -252,12 +252,12 @@ graph TB
     B --> B2[🔑 API_MASTER_KEY]
     B --> B3[🎫 AUTH_TOKENS]
     
-    C --> C1[🔄 fetch()]
+    C --> C1[🔄 fetch]
     C --> C2[🗺️ 路由表]
     
-    D --> D1[🔐 generateSign()]
-    D --> D2[📤 submitTask()]
-    D --> D3[🔄 pollTask()]
+    D --> D1[🔐 generateSign]
+    D --> D2[📤 submitTask]
+    D --> D3[🔄 pollTask]
     
     E --> E1[💬 handleChatCompletions]
     E --> E2[🖼️ handleImagesGenerations]
