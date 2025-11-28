@@ -30,7 +30,7 @@ const CONFIG = {
   SIGN_APP_KEY: "s#c_120*AB",
 
   // --- 上游配置 ---
-  UPSTREAM_API: "https://api.mindvideo.ai/api",
+  UPSTREAM_API: "https://api.mindvideo.ai/api/v2",
   
   // --- 模型定义 ---
   MODELS: {
