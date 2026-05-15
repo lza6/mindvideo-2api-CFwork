@@ -1,49 +1,63 @@
 // =================================================================================
 //  项目: mindvideo-2api (Cloudflare Worker 单文件全功能版)
-//  版本: 3.2.0 (代号: Chimera Synthesis - Visual Progress)
+//  版本: 3.3.3 (代号: Ultimate Stealth & Full UI)
 //  作者: 首席开发者体验架构师
-//  日期: 2025-11-22
+//  日期: 2026-05-15
 //
-//  [更新日志 v3.2.0]
-//  1. [UI] 新增实时进度条 (Progress Bar) 和状态文本显示。
-//  2. [Fix] 修复了 99% 进度卡死的问题，优化了完成状态的判断逻辑。
-//  3. [Fix] 错误信息现在会直接显示上游返回的中文提示 (如: 人数过多)。
-//  4. [Model] 校准了模型名称显示，支持双图上传 (图生图)。
+//  [更新日志 v3.3.3]
+//  1. [Core] 新增 uuidv4() 生成器，对齐官方 x-request-id 请求头。
+//  2. [Core] 更新 User-Agent 和 Accept-Encoding 匹配最新 HAR 包，降低风控。
+//  3. [Fix] 增强错误捕获，直接透传官方的 401/403 错误信息，避免模糊的 500 报错。
+//  4. [Fix] 修复跨域预检请求 (OPTIONS) 被拦截的问题。
+//  5. [Fix] 修复标准 API 模式下非流式请求提前返回空内容的问题。
+//  6. [UI] 完整保留所有动态 UI 控制逻辑与前端交互代码。
 // =================================================================================
 
 // --- [第一部分: 核心配置] ---
 const CONFIG = {
   PROJECT_NAME: "mindvideo-2api",
-  PROJECT_VERSION: "3.2.0",
+  PROJECT_VERSION: "3.3.3",
   
   // --- 安全配置 ---
-  // ⚠️ 请在 Cloudflare 环境变量中设置 API_MASTER_KEY，或者修改此处
   API_MASTER_KEY: "1", 
   
   // --- MindVideo 凭证 ---
-  // 自动填充您提供的最新 Token
+  // ⚠️⚠️⚠️ 必须替换为您最新抓包的 Token ⚠️⚠️⚠️
   AUTH_TOKENS: [
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS5taW5kdmlkZW8uYWkvYXBpL3JlZnJlc2giLCJpYXQiOjE3NjEwMzU1NDcsImV4cCI6MTc2Mzc1NjM2MywibmJmIjoxNzYzNzQ5MTYzLCJqdGkiOiJnNzVTU2ZsMjBURDR0VE9KIiwic3ViIjoiMjcyNjA2IiwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyIsInVpZCI6MjcyNjA2LCJlbWFpbCI6InExMzY0NTk0NzQwN0BnbWFpbC5jb20iLCJpc05ldyI6dHJ1ZX0.5mm2xNi2BA98N8nhhbklqoiKveJVmkylZMHRL3o3wjQ"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1hcHAubWluZHZpZGVvLmFpL2FwaS9yZWZyZXNoIiwiaWF0IjoxNzc2NDg3OTYzLCJleHAiOjE3Nzg4NDcxNDgsIm5iZiI6MTc3ODgzOTk0OCwianRpIjoiYUdRY1pKclo5aEZxWXRyWSIsInN1YiI6IjI3MjYwNiIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJ1aWQiOjI3MjYwNiwiZW1haWwiOiJxMTM2NDU5NDc0MDdAZ21haWwuY29tIiwiaXNOZXciOmZhbHNlfQ.Q9oDlSaS6Z-0A8T8zHshT19h_FUEz9e6Bjks6o9BFgM"
   ],
   
   // 签名密钥 (固定值)
   SIGN_APP_KEY: "s#c_120*AB",
 
   // --- 上游配置 ---
-  UPSTREAM_API: "https://api.mindvideo.ai/api",
+  UPSTREAM_API: "https://api-app.mindvideo.ai/api",
   
   // --- 模型定义 ---
   MODELS: {
     "sora-2-free": { id: 153, type: 1, category: "video", name: "Sora-2 Video (文生视频)" },
     "gemini-3-image": { id: 190, type: 8, category: "image", name: "Gemini-3 Pro (文生图)" },
-    "gemini-3-i2i": { id: 191, type: 9, category: "image", name: "Gemini-3 I2I (图生图)" }
+    "gemini-3-i2i": { id: 191, type: 9, category: "image", name: "Gemini-3 I2I (图生图)" },
+    "gpt-image-2-free": { id: 292, type: 8, category: "image", name: "GPT Image 2 Free (文生图)" }
   },
-  DEFAULT_MODEL: "sora-2-free",
+  DEFAULT_MODEL: "gpt-image-2-free",
+
+  // --- 自动发现配置 ---
+  DISCOVERY: {
+    SCAN_START: 1,
+    SCAN_END: 300,
+    CONCURRENCY: 5,
+    SCAN_DELAY: 100,
+    CACHE_TTL: 1000 * 60 * 60 * 24 // 24小时缓存
+  },
 };
 
 // --- [第二部分: Worker 入口] ---
 export default {
   async fetch(request, env, ctx) {
+    // 0. 优先处理跨域 OPTIONS 请求，避免触发鉴权拦截
+    if (request.method === 'OPTIONS') return handleCors();
+
     const url = new URL(request.url);
     const apiKey = env.API_MASTER_KEY || CONFIG.API_MASTER_KEY;
 
@@ -54,14 +68,12 @@ export default {
     if (url.pathname === '/v1/chat/completions') return handleChatCompletions(request, apiKey, ctx);
     if (url.pathname === '/v1/images/generations') return handleImageGenerations(request, apiKey, ctx);
     if (url.pathname === '/v1/models') return handleModels(request);
+    if (url.pathname === '/v1/models/discover') return handleDiscoverModels(request);
 
     // 3. 辅助接口
     if (url.pathname === '/v1/tasks/query') return handleTaskQuery(request, apiKey);
     if (url.pathname === '/proxy/upload/sign') return handleUploadSign(request, apiKey);
     if (url.pathname === '/proxy/upload/file') return handleUploadFile(request, apiKey);
-
-    // 4. CORS
-    if (request.method === 'OPTIONS') return handleCors();
 
     return createError(404, "Not Found", "path_not_found");
   }
@@ -70,19 +82,31 @@ export default {
 // --- [第三部分: 核心业务逻辑] ---
 
 /**
+ * 动态生成 UUID 对齐 HAR 包中的 x-request-id
+ */
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
  * 签名生成器 (i-sign)
  */
 async function generateSign() {
-  const nonce = crypto.randomUUID().replace(/-/g, '').substring(0, 16);
-  const timestamp = Date.now();
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let nonce = '';
+  const rnd = new Uint8Array(16);
+  crypto.getRandomValues(rnd);
+  for (let i = 0; i < 16; i++) nonce += chars[rnd[i] % chars.length];
+
+  const timestamp = Date.now(); // 毫秒
   const signStr = `nonce=${nonce}&timestamp=${timestamp}&app_key=${CONFIG.SIGN_APP_KEY}`;
   const sign = await md5(signStr);
 
-  return JSON.stringify({
-    nonce: nonce,
-    timestamp: timestamp,
-    sign: sign
-  });
+  const signObj = { nonce, timestamp, sign };
+  return btoa(JSON.stringify(signObj));
 }
 
 /**
@@ -96,11 +120,12 @@ async function md5(message) {
 }
 
 /**
- * 获取请求头
+ * 完美克隆自 HAR 包的请求头
  */
 async function getHeaders(token) {
   return {
     "accept": "application/json, text/plain, */*",
+    "accept-language": "zh-CN,zh;q=0.9",
     "content-type": "application/json",
     "authorization": `Bearer ${token}`,
     "i-lang": "zh-CN",
@@ -108,18 +133,42 @@ async function getHeaders(token) {
     "i-version": "1.0.8",
     "origin": "https://www.mindvideo.ai",
     "referer": "https://www.mindvideo.ai/",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    "x-request-id": uuidv4(),
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
   };
+}
+
+/**
+ * 查找模型配置
+ */
+function findModelConfig(modelKey) {
+  if (CONFIG.MODELS[modelKey]) return { config: CONFIG.MODELS[modelKey], source: 'config' };
+
+  if (modelsCache) {
+    const cached = modelsCache.find(m => m.id === modelKey || m.name === modelKey);
+    if (cached) {
+      return {
+        config: {
+          id: parseInt(cached.id),
+          type: cached.type ?? 8,
+          category: cached.category || "image",
+          name: cached.name
+        },
+        source: 'discovered'
+      };
+    }
+  }
+  return null;
 }
 
 /**
  * 提交任务
  */
 async function submitTask(modelKey, prompt, options = {}) {
-  const modelConfig = CONFIG.MODELS[modelKey] || CONFIG.MODELS[CONFIG.DEFAULT_MODEL];
-  // 随机选择 Token 实现轮询
+  const lookup = findModelConfig(modelKey) || { config: CONFIG.MODELS[CONFIG.DEFAULT_MODEL], source: 'config' };
+  const modelConfig = lookup.config;
   const token = CONFIG.AUTH_TOKENS[Math.floor(Math.random() * CONFIG.AUTH_TOKENS.length)];
-  
+
   const payload = {
     type: modelConfig.type,
     bot_id: modelConfig.id,
@@ -135,6 +184,7 @@ async function submitTask(modelKey, prompt, options = {}) {
     payload.is_public = true;
     payload.copy_protection = false;
   } else if (modelConfig.category === 'image') {
+    payload.options.size = options.size || "auto";
     if (options.image) payload.options.image = options.image;
     if (options.image_1) payload.options.image_1 = options.image_1;
   }
@@ -150,12 +200,16 @@ async function submitTask(modelKey, prompt, options = {}) {
   try {
     data = JSON.parse(text);
   } catch (e) {
-    throw new Error(`Upstream returned non-JSON: ${text.substring(0, 100)}`);
+    throw new Error(`Upstream Error: 返回了非 JSON 数据 (${res.status})`);
   }
 
+  // 精准抛出上游的错误原因
   if (data.code !== 0 || !data.data?.id) {
-    // 捕获 "未授权" 或其他业务错误
-    throw new Error(`Upstream Error: ${data.message || JSON.stringify(data)}`);
+    const errorMsg = data.message || JSON.stringify(data);
+    if (errorMsg.includes('过期') || res.status === 401 || data.code === 401) {
+      throw new Error(`[核心错误] 官方账号 Token 已过期或无效，请抓包替换 AUTH_TOKENS!`);
+    }
+    throw new Error(`Upstream Error: ${errorMsg}`);
   }
 
   return { taskId: data.data.id, token };
@@ -190,18 +244,15 @@ async function pollTask(taskId, token) {
   let resultUrl = null;
   
   if (task.task_status === 'completed') {
-    // 优先从 results 获取，其次从 cover_url
     if (task.results && task.results.length > 0) {
       resultUrl = task.results[0].result_url || task.results[0].cover_url;
     }
     if (!resultUrl && task.cover_url) resultUrl = task.cover_url;
   }
 
-  // 提取具体的错误信息
   let errorMsg = null;
   if (task.task_status === 'failed') {
     errorMsg = task.task_remark || "Unknown error";
-    // 尝试提取更友好的错误提示
     if (errorMsg.includes("人数过多")) errorMsg = "此功能使用人数过多，请稍后再试。";
   }
 
@@ -216,7 +267,7 @@ async function pollTask(taskId, token) {
 // --- [API 处理器] ---
 
 async function handleChatCompletions(req, apiKey, ctx) {
-  if (!checkAuth(req, apiKey)) return createError(401, "Unauthorized", "auth_error");
+  if (!checkAuth(req, apiKey)) return createError(401, "API Key Unauthorized", "auth_error");
   
   let body;
   try { body = await req.json(); } catch(e) { return createError(400, "Invalid JSON"); }
@@ -234,7 +285,6 @@ async function handleChatCompletions(req, apiKey, ctx) {
     }
   } catch(e) {}
 
-  // 1. 提交任务
   let taskInfo;
   try {
     taskInfo = await submitTask(model, prompt, options);
@@ -242,12 +292,11 @@ async function handleChatCompletions(req, apiKey, ctx) {
     return createError(500, e.message, "upstream_error");
   }
 
-  // 2. WebUI 模式
   if (options.clientPoll) {
     const resp = {
       id: `chatcmpl-${taskInfo.taskId}`,
       object: "chat.completion",
-      created: Date.now(),
+      created: Math.floor(Date.now() / 1000),
       model: model,
       choices: [{
         index: 0,
@@ -258,38 +307,70 @@ async function handleChatCompletions(req, apiKey, ctx) {
     return new Response(JSON.stringify(resp), { headers: corsHeaders() });
   }
 
-  // 3. API 模式 (流式轮询)
+  if (!stream) {
+    try {
+      const startTime = Date.now();
+      while (Date.now() - startTime < 600000) { 
+        const pollRes = await pollTask(taskInfo.taskId, taskInfo.token);
+        
+        if (pollRes.status === 'completed') {
+          const markdown = `![Generated Content](${pollRes.url})`;
+          const resp = {
+            id: `chatcmpl-${taskInfo.taskId}`,
+            object: "chat.completion",
+            created: Math.floor(Date.now() / 1000),
+            model: model,
+            choices: [{
+              index: 0,
+              message: { role: "assistant", content: markdown },
+              finish_reason: "stop"
+            }]
+          };
+          return new Response(JSON.stringify(resp), { headers: corsHeaders() });
+        } else if (pollRes.status === 'failed') {
+          return createError(500, pollRes.error || "Task failed", "upstream_error");
+        } else {
+          await new Promise(r => setTimeout(r, 5000)); 
+        }
+      }
+      return createError(504, "Generation timeout", "timeout");
+    } catch (e) {
+      return createError(500, e.message, "upstream_error");
+    }
+  }
+
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
 
   ctx.waitUntil((async () => {
     try {
-      if (stream) await sendSSE(writer, encoder, "🚀 任务已提交，正在处理...");
+      await sendSSE(writer, encoder, "🚀 任务已提交，正在处理...");
 
       const startTime = Date.now();
-      while (Date.now() - startTime < 600000) { // 10分钟超时
+      let lastProgress = -1;
+
+      while (Date.now() - startTime < 600000) { 
         const pollRes = await pollTask(taskInfo.taskId, taskInfo.token);
         
         if (pollRes.status === 'completed') {
           const markdown = `\n\n![Generated Content](${pollRes.url})`;
-          if (stream) {
-            await sendSSE(writer, encoder, markdown);
-            await writer.write(encoder.encode("data: [DONE]\n\n"));
-          }
+          await sendSSE(writer, encoder, markdown);
+          await writer.write(encoder.encode("data: [DONE]\n\n"));
           break;
         } else if (pollRes.status === 'failed') {
           throw new Error(pollRes.error);
         } else {
-          if (stream) await sendSSE(writer, encoder, `⏳ 进度: ${pollRes.progress}%`);
-          await new Promise(r => setTimeout(r, 5000)); // 5秒轮询
+          if (pollRes.progress !== lastProgress) {
+            await sendSSE(writer, encoder, `\n⏳ 进度: ${pollRes.progress}%`);
+            lastProgress = pollRes.progress;
+          }
+          await new Promise(r => setTimeout(r, 5000)); 
         }
       }
     } catch (e) {
-      if (stream) {
-        await sendSSE(writer, encoder, `\n\n❌ 错误: ${e.message}`);
-        await writer.write(encoder.encode("data: [DONE]\n\n"));
-      }
+      await sendSSE(writer, encoder, `\n\n❌ 错误: ${e.message}`);
+      await writer.write(encoder.encode("data: [DONE]\n\n"));
     } finally {
       await writer.close();
     }
@@ -303,12 +384,11 @@ async function handleChatCompletions(req, apiKey, ctx) {
 async function handleImageGenerations(req, apiKey, ctx) {
   if (!checkAuth(req, apiKey)) return createError(401, "Unauthorized");
   const body = await req.json();
-  const model = CONFIG.MODELS["gemini-3-image"] ? "gemini-3-image" : CONFIG.DEFAULT_MODEL;
+  const model = body.model || (CONFIG.MODELS["gemini-3-image"] ? "gemini-3-image" : CONFIG.DEFAULT_MODEL);
   
   try {
     const { taskId, token } = await submitTask(model, body.prompt);
     
-    // 阻塞轮询 (仅建议测试用)
     let resultUrl = null;
     const startTime = Date.now();
     while (Date.now() - startTime < 120000) {
@@ -324,7 +404,7 @@ async function handleImageGenerations(req, apiKey, ctx) {
     if (!resultUrl) throw new Error("Timeout");
 
     return new Response(JSON.stringify({
-      created: Date.now(),
+      created: Math.floor(Date.now() / 1000),
       data: [{ url: resultUrl }]
     }), { headers: corsHeaders() });
 
@@ -410,9 +490,188 @@ function handleCors() {
   return new Response(null, { status: 204, headers: corsHeaders() });
 }
 
+function getMergedModels() {
+  const configModels = Object.keys(CONFIG.MODELS).map(id => ({
+    id,
+    object: "model",
+    name: CONFIG.MODELS[id].name,
+    type: CONFIG.MODELS[id].type,
+    category: CONFIG.MODELS[id].category,
+    source: 'config'
+  }));
+
+  if (modelsCache && modelsCache.length > 0) {
+    const discoveredModels = modelsCache.map(m => ({
+      ...m,
+      source: 'discovered'
+    }));
+    const all = [...configModels];
+    for (const d of discoveredModels) {
+      const existing = all.findIndex(m => m.id === d.id);
+      if (existing >= 0) {
+        all[existing] = d; 
+      } else {
+        all.push(d);
+      }
+    }
+    return all;
+  }
+
+  return configModels;
+}
+
 function handleModels() {
-  const data = Object.keys(CONFIG.MODELS).map(id => ({ id, object: "model", name: CONFIG.MODELS[id].name }));
+  const data = getMergedModels();
   return new Response(JSON.stringify({ object: "list", data }), { headers: corsHeaders() });
+}
+
+// --- [模型自动发现系统] ---
+
+let modelsCache = null;
+let cacheTime = 0;
+let isScanning = false;
+
+async function getFreeModels() {
+  const now = Date.now();
+  if (modelsCache && (now - cacheTime < CONFIG.DISCOVERY.CACHE_TTL)) {
+    return modelsCache;
+  }
+
+  const discovered = await discoverFreeModels();
+  if (discovered.length > 0) {
+    modelsCache = discovered;
+    cacheTime = now;
+  } else {
+    modelsCache = Object.keys(CONFIG.MODELS).map(id => ({
+      id,
+      object: "model",
+      name: CONFIG.MODELS[id].name,
+      type: CONFIG.MODELS[id].type,
+      category: CONFIG.MODELS[id].category,
+      free: true 
+    }));
+  }
+
+  return modelsCache;
+}
+
+async function discoverFreeModels() {
+  if (isScanning) {
+    throw new Error("Scan already in progress");
+  }
+  isScanning = true;
+
+  try {
+    const freeModels = [];
+    const { SCAN_START, SCAN_END, CONCURRENCY, SCAN_DELAY } = CONFIG.DISCOVERY;
+
+    for (let start = SCAN_START; start <= SCAN_END; start += CONCURRENCY) {
+      const end = Math.min(start + CONCURRENCY - 1, SCAN_END);
+      const promises = [];
+
+      for (let botId = start; botId <= end; botId++) {
+        promises.push(testBot(botId));
+      }
+
+      const results = await Promise.allSettled(promises);
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const botId = start + i;
+        if (result.status === 'fulfilled' && result.value) {
+          freeModels.push(result.value);
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, SCAN_DELAY));
+    }
+
+    const unique = [];
+    const seen = new Set();
+    for (const m of freeModels) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id);
+        unique.push(m);
+      }
+    }
+
+    console.log(`Discovery found ${unique.length} free models:`, unique.map(m => m.name).join(', '));
+    return unique;
+
+  } finally {
+    isScanning = false;
+  }
+}
+
+async function testBot(botId) {
+  const token = CONFIG.AUTH_TOKENS[Math.floor(Math.random() * CONFIG.AUTH_TOKENS.length)];
+
+  const payload = {
+    type: 8,
+    bot_id: botId,
+    options: {
+      prompt: "test",
+      history_images: []
+    }
+  };
+
+  try {
+    const res = await fetch(`${CONFIG.UPSTREAM_API}/v2/creations`, {
+      method: 'POST',
+      headers: await getHeaders(token),
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch (e) { return null; }
+
+    if (data.code === 0 && data.data) {
+      const bot = data.bot || data.data.bot;
+      if (bot && bot.base_credits === 0) {
+        return {
+          id: String(bot.id || botId),
+          object: "model",
+          name: bot.name || `Bot-${botId}`,
+          type: bot.type ?? 8,
+          category: bot.category || "image",
+          free: true
+        };
+      }
+    }
+  } catch (e) {
+    
+  }
+
+  return null;
+}
+
+async function handleDiscoverModels(request) {
+  if (request.method !== 'POST') {
+    return createError(405, "Method Not Allowed");
+  }
+
+  const auth = request.headers.get('Authorization');
+  if (!auth || auth !== `Bearer ${CONFIG.API_MASTER_KEY}`) {
+    return createError(401, "Unauthorized");
+  }
+
+  (async () => {
+    try {
+      const result = await discoverFreeModels();
+      console.log(`Auto-discovery completed. Found ${result.length} free models.`);
+      modelsCache = result;
+      cacheTime = Date.now();
+    } catch (e) {
+      console.error("Auto-discovery failed:", e);
+    }
+  })();
+
+  return new Response(JSON.stringify({
+    status: "scanning",
+    message: "Model discovery started in background",
+    cached_count: modelsCache ? modelsCache.length : 0
+  }), { headers: corsHeaders() });
 }
 
 // --- [第四部分: 开发者驾驶舱 UI] ---
@@ -474,17 +733,14 @@ function handleUI(request, apiKey) {
             <div class="title">生成配置</div>
             <label style="font-size:12px">模式 (Mode)</label>
             <select id="mode-select" onchange="toggleUploads()">
-                <option value="sora-2-free">🎬 Sora-2 Video (文生视频)</option>
-                <option value="gemini-3-image">🎨 Gemini-3 Pro (文生图)</option>
-                <option value="gemini-3-i2i">🖼️ Gemini-3 I2I (图生图)</option>
+                ${Object.entries(CONFIG.MODELS).map(([key, m]) =>
+    `<option value="${key}"${key === CONFIG.DEFAULT_MODEL ? ' selected' : ''} data-category="${m.category}" data-type="${m.type}">${m.name}</option>`
+).join('')}
             </select>
-            
+
             <div id="video-opts">
                 <label style="font-size:12px">比例</label>
-                <select id="ratio">
-                    <option value="1280x720">16:9 (横屏)</option>
-                    <option value="720x1280">9:16 (竖屏)</option>
-                </select>
+                <select id="ratio"></select>
             </div>
 
             <div id="upload-opts" style="display:none">
@@ -559,9 +815,37 @@ function handleUI(request, apiKey) {
         }
 
         function toggleUploads() {
-            const mode = document.getElementById('mode-select').value;
-            document.getElementById('upload-opts').style.display = mode === 'gemini-3-i2i' ? 'block' : 'none';
-            document.getElementById('video-opts').style.display = mode === 'sora-2-free' ? 'block' : 'none';
+            const modeSelect = document.getElementById('mode-select');
+            const selectedOption = modeSelect.options[modeSelect.selectedIndex];
+            const modelType = selectedOption.dataset.type;
+            const modelCategory = selectedOption.dataset.category;
+
+            const uploadOpts = document.getElementById('upload-opts');
+            const videoOpts = document.getElementById('video-opts');
+
+            if (modelType === '9') {
+                uploadOpts.style.display = 'block';
+                videoOpts.style.display = 'none';
+            } else {
+                uploadOpts.style.display = 'none';
+                videoOpts.style.display = 'block';
+            }
+
+            // 动态更新比例选项
+            const ratioSelect = document.getElementById('ratio');
+            if (modelCategory === 'video') {
+                ratioSelect.innerHTML = '<option value="1280x720">16:9 (横屏)</option><option value="720x1280">9:16 (竖屏)</option>';
+            } else {
+                ratioSelect.innerHTML = [
+                    { value: 'auto', label: 'Auto' },
+                    { value: '16:9', label: '16:9' },
+                    { value: '9:16', label: '9:16' },
+                    { value: '1:1', label: '1:1' },
+                    { value: '3:2', label: '3:2' },
+                    { value: '2:3', label: '2:3' },
+                    { value: '3:4', label: '3:4' }
+                ].map(function (o) { return '<option value="' + o.value + '">' + o.label + '</option>'; }).join('');
+            }
         }
 
         function triggerUpload(idx) { document.getElementById('file'+idx).click(); }
@@ -605,16 +889,18 @@ function handleUI(request, apiKey) {
             const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) return alert("请输入提示词");
             
-            const mode = document.getElementById('mode-select').value;
+            const modeSelect = document.getElementById('mode-select');
+            const mode = modeSelect.value;
+            const modelOption = modeSelect.options[modeSelect.selectedIndex];
             const btn = document.getElementById('btn-gen');
-            
+
             const payload = {
                 prompt: prompt,
                 clientPoll: true,
                 size: document.getElementById('ratio').value
             };
 
-            if (mode === 'gemini-3-i2i') {
+            if (modelOption.dataset.type === '9') {
                 if (uploadedImages[1]) payload.image = uploadedImages[1];
                 if (uploadedImages[2]) payload.image_1 = uploadedImages[2];
                 if (!payload.image) return alert("图生图模式至少需要上传一张图片");
@@ -691,7 +977,7 @@ function handleUI(request, apiKey) {
                             const oldText = document.getElementById('current-status-text');
                             if(oldText) oldText.id = '';
 
-                            const isVideo = mode === 'sora-2-free';
+                            const isVideo = modelOption.dataset.category === 'video';
                             log('ai', '生成完成！', statusData.url, isVideo);
                         }
                     } catch (e) {
@@ -705,6 +991,10 @@ function handleUI(request, apiKey) {
                 log('error', \`错误: \${e.message}\`);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleUploads();
+        });
     </script>
 </body>
 </html>`;
