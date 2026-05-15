@@ -1,0 +1,450 @@
+请求网址
+https://api-app.mindvideo.ai/api/v2/creations
+请求方法
+POST
+状态代码
+200 OK
+远程地址
+127.0.0.1:10808
+引荐来源网址政策
+strict-origin-when-cross-origin
+access-control-allow-origin
+*
+cache-control
+no-cache, private
+content-type
+application/json
+date
+Fri, 15 May 2026 07:07:08 GMT
+server
+nginx
+x-ratelimit-limit
+60
+x-ratelimit-remaining
+59
+x-request-id
+018b305f-b97d-4d52-a547-ead8dc4059bb
+:authority
+api-app.mindvideo.ai
+:method
+POST
+:path
+/api/v2/creations
+:scheme
+https
+accept
+application/json, text/plain, */*
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+zh-CN,zh;q=0.9
+authorization
+Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1hcHAubWluZHZpZGVvLmFpL2FwaS9yZWZyZXNoIiwiaWF0IjoxNzc2NDg3OTYzLCJleHAiOjE3Nzg4MzQ5OTIsIm5iZiI6MTc3ODgyNzc5MiwianRpIjoiU1pGYnJaemF4ZXNOVThhQyIsInN1YiI6IjI3MjYwNiIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJ1aWQiOjI3MjYwNiwiZW1haWwiOiJxMTM2NDU5NDc0MDdAZ21haWwuY29tIiwiaXNOZXciOmZhbHNlfQ.x3vDbgEEmcp-gY-c4mOFqlOZ5pyz30gsQLXfuOYlknk
+content-length
+86
+content-type
+application/json
+i-lang
+zh-CN
+i-sign
+eyJub25jZSI6IndKSTdKN0ZKbVBRckcwY0ciLCJ0aW1lc3RhbXAiOjE3Nzg4Mjg3OTk0MjksInNpZ24iOiJkYWU4MjI3ZDVjMTYzYWVhNTQ1ZDdiMTczMzhmMWE3MSJ9
+i-version
+1.0.8
+origin
+https://www.mindvideo.ai
+priority
+u=1, i
+referer
+https://www.mindvideo.ai/
+sec-ch-ua
+"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"
+sec-ch-ua-mobile
+?0
+sec-ch-ua-platform
+"Windows"
+sec-fetch-dest
+empty
+sec-fetch-mode
+cors
+sec-fetch-site
+same-site
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+
+{"type":8,"bot_id":292,"options":{"prompt":"a cat","size":"auto","history_images":[]}}
+
+{
+    "code": 0,
+    "message": "Success",
+    "data": {
+        "user_id": 272606,
+        "model_id": 197,
+        "bot_id": 292,
+        "type": "8",
+        "prompt": "a cat",
+        "credits": 0,
+        "options": {
+            "prompt": "a cat",
+            "size": "auto",
+            "history_images": []
+        },
+        "task_id": null,
+        "task_status": "pending",
+        "task_progress": "0",
+        "results_count": 1,
+        "publish_status": "unpublished",
+        "publish_remark": "\u81ea\u52a8\u53d1\u5e03",
+        "effect_template_id": null,
+        "category": "image",
+        "copy_protection": false,
+        "task_remark": "The image is being created,which may take 3 minutes.",
+        "parent_result_id": null,
+        "creation_id": null,
+        "created_at": "2026-05-15T07:07:08.000000Z",
+        "id": 16576744,
+        "bot": {
+            "id": 292,
+            "type": "8",
+            "name": "GPT Image 2 Free",
+            "model_id": 197,
+            "sort": 9100,
+            "is_enable": true,
+            "options": [
+                {
+                    "type": "prompt",
+                    "title": "\u63d0\u793a\u8bcd",
+                    "fillRule": {
+                        "required": true,
+                        "maxLength": 1000,
+                        "minLength": 2
+                    },
+                    "identifier": "prompt",
+                    "placeholder": "\u4f60\u60f3\u8981\u521b\u5efa\u4ec0\u4e48?",
+                    "word_options": [
+                        {
+                            "label": "Cozy Bookshelves",
+                            "value": "A cozy library scene featuring wooden bookshelves filled with a diverse collection of books. Warm lighting from a small lamp casts a gentle glow over the shelves, highlighting the spines and creating an inviting atmosphere. Various small decorative items are placed among the books, adding character to the scene. Ultra-high definition, 4K."
+                        },
+                        {
+                            "label": "Modern Cityscape",
+                            "value": "A stunning view of a futuristic city skyline dominated by a towering, iconic skyscraper. The city is bustling with modern infrastructure, including complex roadways and architectural marvels. The scene captures the dynamic energy of urban life with vibrant colors of the buildings reflecting the soft glow of the setting sun in the sky. Ultra-high definition, 4K."
+                        },
+                        {
+                            "label": "Lake",
+                            "value": "A breathtaking view of a mountain landscape featuring majestic peaks under a partly cloudy sky. The tranquil lake in the foreground reflects the mountains perfectly, creating a symmetrical, mirror-like effect. Tall pine trees line the shore, adding depth and emphasizing the natural beauty of the scene. Ultra-high definition, 4K."
+                        }
+                    ],
+                    "identifierMap": {
+                        "translate_prompt": "is_translate"
+                    }
+                },
+                {
+                    "type": "aspect_ratio",
+                    "title": "\u957f\u5bbd\u6bd4",
+                    "options": [
+                        {
+                            "label": "Auto",
+                            "value": "auto"
+                        },
+                        {
+                            "label": "16:9",
+                            "value": "16:9"
+                        },
+                        {
+                            "label": "9:16",
+                            "value": "9:16"
+                        },
+                        {
+                            "label": "1:1",
+                            "value": "1:1"
+                        },
+                        {
+                            "label": "3:2",
+                            "value": "3:2"
+                        },
+                        {
+                            "label": "2:3",
+                            "value": "2:3"
+                        },
+                        {
+                            "label": "3:4",
+                            "value": "3:4"
+                        }
+                    ],
+                    "identifier": "size",
+                    "description": "\u9009\u62e9\u5408\u9002\u7684\u957f\u5bbd\u6bd4"
+                }
+            ],
+            "base_credits": 0,
+            "credits_rules": {
+                "credits": [],
+                "vip_limit": 8,
+                "free_limit": 4,
+                "description": "\u590d\u6742\u63d0\u793a\u4e0b\u4ecd\u80fd\u751f\u6210\u9ad8\u4e00\u81f4\u3001\u771f\u5b9e\u3001\u53ef\u63a7\u56fe\u50cf\u3002",
+                "image_specs": [],
+                "subscription": {
+                    "mode": {
+                        "pro": false,
+                        "std": false
+                    }
+                },
+                "use_limit_key": "free_gpt_image_2"
+            },
+            "created_at": "2026-04-23T03:51:34.000000Z",
+            "updated_at": "2026-05-09T10:19:28.000000Z",
+            "deleted_at": null,
+            "category": "image",
+            "level": "none",
+            "is_recommend": false,
+            "state": 0,
+            "enable_exception_notice": false,
+            "exception_notice_content": null,
+            "ai_model": {
+                "id": 197,
+                "model_key": "gpt-image-2",
+                "platform": null
+            }
+        },
+        "estimated_duration": {
+            "min": 10,
+            "max": 120
+        },
+        "queue_count": 32,
+        "generate_duration": 0,
+        "model": {
+            "id": 197,
+            "name": "Image-T-GPT-Image-2-Free",
+            "platform": null,
+            "model_key": "gpt-image-2",
+            "icon": "https:\/\/static.mindvideo.ai\/images\/5e41600be48ec06317a2bc1740092a9d.png",
+            "sort": 0,
+            "is_enable": true,
+            "created_at": "2026-04-23T03:50:57.000000Z",
+            "updated_at": "2026-04-23T03:50:57.000000Z",
+            "deleted_at": null,
+            "estimated_duration_min": 0,
+            "estimated_duration_max": 0
+        }
+    },
+    "timestamp": 1778828828
+}
+
+
+请求网址
+https://api-app.mindvideo.ai/api/user/credits/stats
+请求方法
+GET
+状态代码
+200 OK
+远程地址
+127.0.0.1:10808
+引荐来源网址政策
+strict-origin-when-cross-origin
+access-control-allow-origin
+*
+cache-control
+no-cache, private
+content-type
+application/json
+date
+Fri, 15 May 2026 07:07:09 GMT
+server
+nginx
+x-ratelimit-limit
+60
+x-ratelimit-remaining
+57
+x-request-id
+1e4e7b05-b646-4b88-8450-78d545c20c95
+:authority
+api-app.mindvideo.ai
+:method
+GET
+:path
+/api/user/credits/stats
+:scheme
+https
+accept
+application/json, text/plain, */*
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+zh-CN,zh;q=0.9
+authorization
+Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1hcHAubWluZHZpZGVvLmFpL2FwaS9yZWZyZXNoIiwiaWF0IjoxNzc2NDg3OTYzLCJleHAiOjE3Nzg4MzQ5OTIsIm5iZiI6MTc3ODgyNzc5MiwianRpIjoiU1pGYnJaemF4ZXNOVThhQyIsInN1YiI6IjI3MjYwNiIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJ1aWQiOjI3MjYwNiwiZW1haWwiOiJxMTM2NDU5NDc0MDdAZ21haWwuY29tIiwiaXNOZXciOmZhbHNlfQ.x3vDbgEEmcp-gY-c4mOFqlOZ5pyz30gsQLXfuOYlknk
+i-lang
+zh-CN
+i-version
+1.0.8
+origin
+https://www.mindvideo.ai
+priority
+u=1, i
+referer
+https://www.mindvideo.ai/
+sec-ch-ua
+"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"
+sec-ch-ua-mobile
+?0
+sec-ch-ua-platform
+"Windows"
+sec-fetch-dest
+empty
+sec-fetch-mode
+cors
+sec-fetch-site
+same-site
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+
+
+{
+    "code": 0,
+    "message": "success",
+    "data": {
+        "sources": {
+            "purchase": {
+                "total_credits": 0,
+                "used_credits": 0,
+                "remaining_credits": 0
+            },
+            "registration": {
+                "total_credits": 17,
+                "used_credits": 0,
+                "remaining_credits": 17
+            },
+            "checkin": {
+                "total_credits": 2,
+                "used_credits": 0,
+                "remaining_credits": 2
+            },
+            "invitation": {
+                "total_credits": 0,
+                "used_credits": 0,
+                "remaining_credits": 0
+            },
+            "invitee": {
+                "total_credits": 0,
+                "used_credits": 0,
+                "remaining_credits": 0
+            },
+            "purchase_package": {
+                "total_credits": 0,
+                "used_credits": 0,
+                "remaining_credits": 0
+            },
+            "admin_grant": {
+                "total_credits": 0,
+                "used_credits": 0,
+                "remaining_credits": 0
+            },
+            "model_gift": {
+                "total_credits": 0,
+                "used_credits": 0,
+                "remaining_credits": 0
+            }
+        },
+        "subscription_type": "Free",
+        "total": {
+            "total_credits": "19",
+            "used_credits": 0,
+            "remaining_credits": 19
+        },
+        "model_credits": [],
+        "gpt_image_2_credits": {
+            "total_credits": 0,
+            "used_credits": 0,
+            "remaining_credits": 0
+        },
+        "general_credits": {
+            "total_credits": 19,
+            "used_credits": 0,
+            "remaining_credits": 19
+        },
+        "plans_credits": {
+            "total_credits": 0,
+            "used_credits": 0,
+            "remaining_credits": 0
+        },
+        "purchase_credits": {
+            "total_credits": 0,
+            "used_credits": 0,
+            "remaining_credits": 0
+        },
+        "bonus_credits": {
+            "total_credits": 19,
+            "used_credits": 0,
+            "remaining_credits": 19
+        }
+    }
+}
+
+
+请求网址
+https://api-app.mindvideo.ai/api/v2/creations/task_progress?ids[]=16576744
+请求方法
+GET
+状态代码
+200 OK
+远程地址
+127.0.0.1:10808
+引荐来源网址政策
+strict-origin-when-cross-origin
+access-control-allow-origin
+*
+cache-control
+no-cache, private
+content-type
+application/json
+date
+Fri, 15 May 2026 07:07:09 GMT
+server
+nginx
+x-ratelimit-limit
+60
+x-ratelimit-remaining
+58
+x-request-id
+5611e9f1-e126-4c0c-8fc0-0c365dd26f8c
+:authority
+api-app.mindvideo.ai
+:method
+GET
+:path
+/api/v2/creations/task_progress?ids[]=16576744
+:scheme
+https
+accept
+application/json, text/plain, */*
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+zh-CN,zh;q=0.9
+authorization
+Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1hcHAubWluZHZpZGVvLmFpL2FwaS9yZWZyZXNoIiwiaWF0IjoxNzc2NDg3OTYzLCJleHAiOjE3Nzg4MzQ5OTIsIm5iZiI6MTc3ODgyNzc5MiwianRpIjoiU1pGYnJaemF4ZXNOVThhQyIsInN1YiI6IjI3MjYwNiIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJ1aWQiOjI3MjYwNiwiZW1haWwiOiJxMTM2NDU5NDc0MDdAZ21haWwuY29tIiwiaXNOZXciOmZhbHNlfQ.x3vDbgEEmcp-gY-c4mOFqlOZ5pyz30gsQLXfuOYlknk
+i-lang
+zh-CN
+i-version
+1.0.8
+origin
+https://www.mindvideo.ai
+priority
+u=1, i
+referer
+https://www.mindvideo.ai/
+sec-ch-ua
+"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"
+sec-ch-ua-mobile
+?0
+sec-ch-ua-platform
+"Windows"
+sec-fetch-dest
+empty
+sec-fetch-mode
+cors
+sec-fetch-site
+same-site
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+
+
